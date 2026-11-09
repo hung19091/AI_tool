@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Developer Toolbox</title>
+
+<style>
+:root {
+    --bg-page:#f0f2f5;
+    --bg-container:#ffffff;
+    --text-main:#333;
+    --primary:#1a73e8;
+}
+
+body{
+    font-family:"Segoe UI","Microsoft JhengHei",sans-serif;
+    background:var(--bg-page);
+    margin:0;
+    padding:25px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+}
+
+h1{
+    color:var(--primary);
+}
+
+.tools{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:20px;
+}
+
+.tool-btn{
+    background:white;
+    border:1px solid #ddd;
+    padding:12px 20px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.tool-btn:hover{
+    background:#eef5ff;
+}
+
+iframe{
+    width:100%;
+    height:2000px;
+    border:none;
+    margin-top:20px;
+    background:white;
+    border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Developer Toolbox</h1>
+
+    <div id="toolMenu" class="tools"></div>
+
+    <iframe id="toolFrame"></iframe>
+
+</div>
+
+<script>
+
+fetch('./tools.json')
+.then(r=>r.json())
+.then(tools=>{
+
+    const menu=document.getElementById('toolMenu');
+    const frame=document.getElementById('toolFrame');
+
+    tools.forEach(tool=>{
+
+        const btn=document.createElement('button');
+
+        btn.className='tool-btn';
+        btn.innerText=tool.name;
+
+        btn.onclick=()=>{
+            frame.src=tool.url;
+        };
+
+        menu.appendChild(btn);
+    });
+
+    if(tools.length>0){
+        frame.src=tools[0].url;
+    }
+});
+
+</script>
+
+</body>
+</html>

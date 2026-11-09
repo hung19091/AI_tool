@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TFS Compare Tool</title>
+
+<style>
+body{
+    font-family: Consolas,"Microsoft JhengHei";
+    margin:20px;
+}
+
+.dropzone{
+    border:2px dashed #999;
+    background:#fafafa;
+    padding:20px;
+    margin-bottom:10px;
+}
+
+.result{
+    border:1px solid #ccc;
+    padding:10px;
+    margin-top:10px;
+    white-space:pre-wrap;
+    max-height:300px;
+    overflow:auto;
+}
+
+button{
+    padding:10px 20px;
+    font-size:14px;
+}
+
+h3{
+    margin-top:25px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>TFS 更新檔比對工具</h2>
+
+<div id="updateZone" class="dropzone">
+拖入 更新檔清單.txt
+</div>
+
+<div id="changeZone" class="dropzone">
+拖入 變更集.txt
+</div>
+
+<button onclick="compare()">開始比對</button>
+
+<h3>統計</h3>
+<div id="summary" class="result"></div>
+
+<h3>1. 更新檔有、變更集沒有</h3>
+<div id="missingInChangeset" class="result"></div>
+
+<h3>2. 更新檔有、但變更集標示刪除</h3>
+<div id="deletedInChangeset" class="result"></div>
+
+<h3>3. 變更集有、更新檔沒有</h3>
+<div id="missingInUpdate" class="result"></div>
+
+<h3>4. 雙方都有（正常）</h3>
+<div id="matched" class="result"></div>
+
+<script>
+
+let updateText = "";
+let changesetText = "";
+
+function setupDrop(id, callback){
+
+    const zone = document.getElementById(id);
+
+    zone.addEventListener("dragover", function(e){
+        e.preventDefault();
+    });
+
+    zone.addEventListener("drop", function(e){
+
+        e.preventDefault();
+
+        const file = e.dataTransfer.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(evt){
+
+            callback(evt.target.result);
+
+            zone.innerHTML =
+                "✅ 已載入：<b>" +
+                file.name +
+                "</b>";
+        };
+
+        reader.readAsText(file,"utf-8");
+    });
+}
+
+setupDrop(
+    "updateZone",
+    txt => updateText = txt
+);
+
+setupDrop(
+    "changeZone",
+    txt => changesetText = txt
+);
+
+function getRelativePath(line){
+
+    line = line.trim();
+
+    if(!line)
+        return "";
+
+    line = line.replace(/\//g,"\\");
+
+    const lower = line.toLowerCase();
+
+    let idxWebsite = lower.indexOf("website\\");
+    let idxServer = lower.indexOf("server\\");
+
+    let idx = -1;
+
+    if(idxWebsite >= 0)
+        idx = idxWebsite;
+
+    if(idxServer >= 0 &&
+       (idx == -1 || idxServer < idx))
+        idx = idxServer;
+
+    if(idx >= 0)
+        line = line.substring(idx);
+
+    return line;
+}
+
+function normalizeChangeset(line){
+
+    const deleted = line.includes("刪除");
+
+    let path = getRelativePath(line);
+
+    if(!path)
+        return null;
+
+    path = path.replace(
+        /\s+(編輯|刪除|加入|重新命名).*$/i,
+        ""
+    );
+
+    return {
+        path:path.trim(),
+        deleted:deleted
+    };
+}
+
+function compare(){
+
+    const updateLines =
+        updateText.split(/\r?\n/);
+
+    const changeLines =
+        changesetText.split(/\r?\n/);
+
+    const updateSet = new Set();
+
+    const changeMap = {};
+
+    updateLines.forEach(function(line){
+
+        let path = getRelativePath(line);
+
+        if(path)
+            updateSet.add(path);
+    });
+
+    changeLines.forEach(function(line){
+
+        const obj =
+            normalizeChangeset(line);
+
+        if(!obj)
+            return;
+
+        changeMap[obj.path] = {
+            deleted:obj.deleted
+        };
+    });
+
+    const missingInChangeset = [];
+    const deletedInChangeset = [];
+    const missingInUpdate = [];
+    const matched = [];
+
+    updateSet.forEach(function(path){
+
+        if(!(path in changeMap)){
+
+            missingInChangeset.push(path);
+            return;
+        }
+
+        if(changeMap[path].deleted){
+
+            deletedInChangeset.push(path);
+            return;
+        }
+
+        matched.push(path);
+    });
+
+    Object.keys(changeMap).forEach(function(path){
+
+        if(changeMap[path].deleted)
+            return;
+
+        if(!updateSet.has(path))
+            missingInUpdate.push(path);
+    });
+
+    document.getElementById("summary").textContent =
+`更新檔數量            : ${updateSet.size}
+變更集數量            : ${Object.keys(changeMap).length}
+
+正常匹配              : ${matched.length}
+更新檔不存在變更集    : ${missingInChangeset.length}
+更新檔但變更集已刪除  : ${deletedInChangeset.length}
+變更集存在但未發版    : ${missingInUpdate.length}`;
+
+
+    document.getElementById(
+        "missingInChangeset"
+    ).textContent =
+        missingInChangeset.length
+        ? missingInChangeset.join("\n")
+        : "無";
+
+    document.getElementById(
+        "deletedInChangeset"
+    ).textContent =
+        deletedInChangeset.length
+        ? deletedInChangeset.join("\n")
+        : "無";
+
+    document.getElementById(
+        "missingInUpdate"
+    ).textContent =
+        missingInUpdate.length
+        ? missingInUpdate.join("\n")
+        : "無";
+
+    document.getElementById(
+        "matched"
+    ).textContent =
+        matched.length
+        ? matched.join("\n")
+        : "無";
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+[
+    {
+        "name":"Unicode 解碼器",
+        "url":"tools/unicode.html"
+    },
+    {
+        "name":"JSON 工具",
+        "url":"tools/json.html"
+    },
+    {
+        "name":"TFS Compare",
+        "url":"tools/compare.html"
+    }
+]

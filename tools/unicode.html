@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Unicode 萬用解碼器</title>
+    <style>
+		/* 定義顏色變數：預設為原本的白底藍調 */
+		:root {
+			--bg-page: #f0f2f5;
+			--bg-container: #ffffff;
+			--text-main: #333333;
+			--text-secondary: #666666;
+			--primary-color: #1a73e8;
+			--primary-hover: #1557b0;
+			--input-border: #cccccc;
+			--output-dashed: #1a73e8;
+		}
+
+		/* 自動偵測：當使用者部落格或系統切換為深色時 */
+		@media (prefers-color-color-scheme: dark), [data-theme='dark'] {
+			:root {
+				--bg-page: #1a1a1b;      /* 深色背景 */
+				--bg-container: #2d2d2e;  /* 卡片深灰 */
+				--text-main: #e4e6eb;    /* 近白色字 */
+				--text-secondary: #b0b3b8;
+				--primary-color: #8ab4f8; /* 淺藍色（深色模式下較不刺眼） */
+				--primary-hover: #aecbfa;
+				--input-border: #474849;
+				--output-dashed: #8ab4f8;
+			}
+		}
+
+		body { 
+			font-family: "Segoe UI", Microsoft JhengHei, sans-serif;
+			background: var(--bg-page); 
+			color: var(--text-main);
+			padding: 30px; 
+			transition: all 0.3s ease; /* 增加顏色切換的平滑感 */
+		}
+
+		.container { 
+			max-width: 800px; margin: 0 auto; 
+			background: var(--bg-container); 
+			padding: 20px; border-radius: 8px; 
+			box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
+		}
+
+		h2 { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
+		
+		p { color: var(--text-secondary); }
+
+		textarea { 
+			width: 100%; height: 200px; padding: 12px; 
+			background: var(--bg-container);
+			color: var(--text-main);
+			border: 1px solid var(--input-border); 
+			border-radius: 4px; box-sizing: border-box; 
+			font-size: 14px; font-family: monospace; 
+		}
+
+		.btn-group { margin: 15px 0; }
+
+		button { 
+			padding: 10px 25px; background: var(--primary-color); 
+			color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; 
+		}
+
+		button:hover { background: var(--primary-hover); }
+
+		#output { 
+			background: var(--bg-container); 
+			border: 1px dashed var(--output-dashed); 
+			padding: 15px; min-height: 100px; white-space: pre-wrap; word-break: break-all; 
+			color: var(--text-main); margin-top: 20px; display: none; 
+		}
+	</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Unicode解碼器</h2>
+    <p>請貼入任何包含 Unicode 編碼的文字（如：JSON 錯誤訊息、Log 等）：</p>
+    
+    <textarea id="input" placeholder="貼在這裡... 例如：\u627E\u4E0D\u5230\u985E\u578B"></textarea>
+    
+    <div class="btn-group">
+        <button onclick="decode()">立即轉譯</button>
+    </div>
+
+    <div id="output"></div>
+</div>
+
+<script>
+    function decode() {
+        const input = document.getElementById('input').value;
+        if (!input) return;
+
+        // 使用正規表示式抓取所有 \uXXXX 並轉碼
+        const result = input.replace(/\\u([0-9a-fA-F]{4})/g, function(match, grp) {
+            return String.fromCharCode(parseInt(grp, 16));
+        });
+
+        const outputDiv = document.getElementById('output');
+        outputDiv.innerText = result;
+        outputDiv.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
